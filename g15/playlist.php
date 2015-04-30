@@ -1,15 +1,22 @@
 <?php
 session_start();
-require '/lib/custom_query.php';
+include '/lib/db_connect.php';
+include '/lib/Playlist.php';
+include '/lib/Plstfiles.php';
 $u = $_SESSION['uname'];
-$uid = get_uid($u);
+$uid = $_SESSION['uid'];
 $m = $_GET['m'];
 $pname = $_GET['p'];
-$result = get_playlist_by_name($pname, $uid);
-$pid = mysqli_fetch_array($result);
-$pid = $pid['PId'];
-$result = insert_into_playlist($pid, $m);
+$plst_obj = new Playlist;
+$plst_obj->__set('uid', $uid);
+$plst_obj->__set('pname', $pname);
+$plst_dao = new PlaylistDAO;
+$result = $plst_dao->get_playlist_by_name($plst_obj);
 $row = mysqli_fetch_array($result);
-$SubscribedTo = $row['Uname'];
-	add_subscription($uid,$SubscribedTo);
+$pid = $row['PId'];
+$plstf_obj = new Plstfiles;
+$plstf_obj->__set('pid', $pid);
+$plstf_obj->__set('mediaid', $m);
+$plstf_dao = new PlstfilesDAO;
+$plstf_dao->insert_into_playlist($plstf_obj);
 ?>

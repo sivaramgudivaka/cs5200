@@ -1,8 +1,11 @@
 <!DOCTYPE>
 
-<?php session_start(); 
-require '/lib/custom_query.php';
-$con=connect();
+<?php
+session_start();
+include 'lib/db_connect.php';
+include '/lib/Meta.php';
+include '/lib/Dandv.php';
+include '/lib/CustomDAO.php';
 
 if(isset($_SESSION['uname']))
 	$u = $_SESSION['uname'];
@@ -21,7 +24,8 @@ if(isset($_SESSION['uname']))
       
       var word_array = [
 	  <?php
-	  $most_searched = get_most_searched();
+	  $customdao_obj = new CustomDAO;
+	  $most_searched = $customdao_obj->get_most_searched();
 	  $uri="watch.php?v=";
 	  $str='';
 	  while($row = mysqli_fetch_array($most_searched))
@@ -52,11 +56,26 @@ if(isset($_SESSION['uname']))
 			<input type="text" class="textBox" name="searchBox" style="width:360px;float:left;" placeholder="search media.." >
 			<a href="#" onclick="sub()" class="text_style1" style="margin-left:-30px;padding-top:0.17cm;float:left;">Go</a>
 			<span style="margin-left:20px;padding-top:0.18cm;position:absolute;">
-			<input type="radio" name="searchi" value="title" id="r1"> <label for="r1"> Title </label>
-			<input type="radio" name="searchi" value="keyword" id="r2"> <label for="r2"> Keywords </label>
-			<input type="radio" name="searchi" value="category" id="r3"> <label for="r3"> Category </label>
+			Filter by:&nbsp;
+			<select name="search_by_category">
+				<option value="Category">Category</option>
+				<option value="Sports">Sports</option>
+				<option value="Music">Music</option>
+				<option value="Kids">Kids</option>
+				<option value="Action">Action</option>
+				<option value="Education">Education</option>
+				<option value="Movies">Movies</option>
+				<option value="Others">Others</option>
+			</select>
+			&nbsp;&nbsp;
+			<select name="search_by_type">
+				<option value="Type">Type</option>
+				<option value="video">video</option>
+				<option value="audio">audio</option>
+				<option value="image">image</option>
+			</select>
 			</span>
-	</form>
+	    </form>
 	
 	<script>
 				function sub()
@@ -104,16 +123,10 @@ if(isset($_SESSION['uname']))
          </span>
 		 <div class="options_section_styles"></div>
 		 <br/>
-		 <span id="list2"> 
-			<a id="opt6" class="option_element" href="myfavorites.php" >Favorites</a><br>
-		    <a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
-         </span>
-		 <div class="options_section_styles"></div>
-		 <br/>
 		 <span id="list3" >
+			<a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
 			<a id="opt8" class="option_element" href="friends.php" >Friends</a><br>
-		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>
-		
+		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>		
 		</span>
 		<br/>
 		
@@ -126,8 +139,8 @@ if(isset($_SESSION['uname']))
 <div  id="comment_section" >
 <h3 >Most Viewed</h3>
 <?php
-
-$mostViewed = get_most_viewed();
+$dandv_dao_obj = new DandvDAO;
+$mostViewed = $dandv_dao_obj->get_most_viewed();
 while($row = mysqli_fetch_array($mostViewed))
 {
 	$TYPE1=substr($row['MediaType'],0,5);
@@ -152,8 +165,7 @@ while($row = mysqli_fetch_array($mostViewed))
 <div  id="comment_section">
 <h3>Recently Viewed</h3>
 <?php
-
-$mostRecentlyViewed=get_most_recently_viewed();
+$mostRecentlyViewed = $customdao_obj->get_most_recently_viewed();
 while($row = mysqli_fetch_array($mostRecentlyViewed))
 {
 	$TYPE1=substr($row['MediaType'],0,5);
@@ -178,9 +190,10 @@ while($row = mysqli_fetch_array($mostRecentlyViewed))
 <div  id="comment_section">
 <h3>Music</h3>
 <?php
-
-$category = 'Music';
-$PublicMedia = get_public_media_by_category($category);
+$meta_obj = new meta;
+$cat = 'Music';
+$meta_obj->__set('category', $cat);
+$PublicMedia = $customdao_obj->get_public_media_by_category($meta_obj);
 while($row = mysqli_fetch_array($PublicMedia))
 {
 	$TYPE1=substr($row['MediaType'],0,5);
@@ -206,9 +219,10 @@ while($row = mysqli_fetch_array($PublicMedia))
 <div  id="comment_section">
 <h3>Sports</h3>
 <?php
-
-$category = 'Sports';
-$PublicMedia = get_public_media_by_category($category);
+$meta_obj = new meta;
+$cat = 'Sports';
+$meta_obj->__set('category', $cat);
+$PublicMedia = $customdao_obj->get_public_media_by_category($meta_obj);
 while($row=mysqli_fetch_array($PublicMedia))
 {
 	$TYPE1=substr($row['MediaType'],0,5);
@@ -233,9 +247,10 @@ while($row=mysqli_fetch_array($PublicMedia))
 <div  id="comment_section">
 <h3>Kids</h3>
 <?php
-
-$category = 'Kids';
-$PublicMedia = get_public_media_by_category($category);
+$meta_obj = new meta;
+$cat = 'Kids';
+$meta_obj->__set('category', $cat);
+$PublicMedia = $customdao_obj->get_public_media_by_category($meta_obj);
 while($row=mysqli_fetch_array($PublicMedia))
 {
 	$TYPE1=substr($row['MediaType'],0,5);
@@ -260,9 +275,10 @@ while($row=mysqli_fetch_array($PublicMedia))
 <div  id="comment_section">
 <h3>Action</h3>
 <?php
-
-$category = 'Action';
-$PublicMedia = get_public_media_by_category($category);
+$meta_obj = new meta;
+$cat = 'Action';
+$meta_obj->__set('category', $cat);
+$PublicMedia = $customdao_obj->get_public_media_by_category($meta_obj);
 while($row=mysqli_fetch_array($PublicMedia))
 {
 	$TYPE1=substr($row['MediaType'],0,5);
@@ -287,9 +303,10 @@ while($row=mysqli_fetch_array($PublicMedia))
 <div  id="comment_section">
 <h3>Movies</h3>
 <?php
-
-$category = 'Movies';
-$PublicMedia = get_public_media_by_category($category);
+$meta_obj = new meta;
+$cat = 'Movies';
+$meta_obj->__set('category', $cat);
+$PublicMedia = $customdao_obj->get_public_media_by_category($meta_obj);
 while($row=mysqli_fetch_array($PublicMedia))
 {
 	$TYPE1=substr($row['MediaType'],0,5);
@@ -314,9 +331,10 @@ while($row=mysqli_fetch_array($PublicMedia))
 <div  id="comment_section">
 <h3>Education</h3>
 <?php
-
-$category = 'Education';
-$PublicMedia = get_public_media_by_category($category);
+$meta_obj = new meta;
+$cat = 'Education';
+$meta_obj->__set('category', $cat);
+$PublicMedia = $customdao_obj->get_public_media_by_category($meta_obj);
 while($row=mysqli_fetch_array($PublicMedia))
 {
 	$TYPE1=substr($row['MediaType'],0,5);
@@ -341,9 +359,10 @@ while($row=mysqli_fetch_array($PublicMedia))
 <div  id="comment_section">
 <h3>Others</h3>
 <?php
-
-$category = 'Others';
-$PublicMedia = get_public_media_by_category($category);
+$meta_obj = new meta;
+$cat = 'Others';
+$meta_obj->__set('category', $cat);
+$PublicMedia = $customdao_obj->get_public_media_by_category($meta_obj);
 while($row=mysqli_fetch_array($PublicMedia))
 {
 	$TYPE1=substr($row['MediaType'],0,5);

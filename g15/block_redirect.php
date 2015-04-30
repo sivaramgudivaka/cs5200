@@ -1,3 +1,5 @@
 <?php
-echo "This video is blocked. No one has permissions to watch this except the uploader. Click <a href=\"index.php\">here</a> to go to main page";
+echo "This video is blocked. You do not have permissions to watch this video. Sorry!";
+echo "Redirecting to <a href=\"index.php\">Home page!</a>";
+header( "refresh:2;url=index.php" );
 ?>

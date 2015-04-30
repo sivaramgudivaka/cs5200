@@ -1,7 +1,8 @@
 <!DOCTYPE>
 
-<?php session_start();
- require '/lib/custom_query.php';
+<?php 
+include '/lib/Search.php';
+include '/lib/db_connect.php';
  $con=connect();?>
 
 <html>
@@ -18,7 +19,8 @@
        
       var word_array = [
 	  <?php
-	  $most_searched = get_most_searched();
+	  $searchdao=new SearchDAO;
+	  $most_searched = $searchdao->get_most_searched();
 	  $uri="watch.php?v=";
 	  $str='';
 	  while($row = mysqli_fetch_array($most_searched))
@@ -50,11 +52,26 @@
 			<input type="text" class="textBox" name="searchBox" style="width:360px;float:left;" placeholder="search media.." >
 			<a href="#" onclick="sub()" class="text_style1" style="margin-left:-30px;padding-top:0.17cm;float:left;">Go</a>
 			<span style="margin-left:20px;padding-top:0.18cm;position:absolute;">
-			Title <input type="radio" name="searchi" value="title">
-			Keywords <input type="radio" name="searchi" value="keyword">
-			Category <input type="radio" name="searchi" value="category">
+			Filter by:&nbsp;
+			<select name="search_by_category">
+				<option value="Category">Category</option>
+				<option value="Sports">Sports</option>
+				<option value="Music">Music</option>
+				<option value="Kids">Kids</option>
+				<option value="Action">Action</option>
+				<option value="Education">Education</option>
+				<option value="Movies">Movies</option>
+				<option value="Others">Others</option>
+			</select>
+			&nbsp;&nbsp;
+			<select name="search_by_type">
+				<option value="Type">Type</option>
+				<option value="video">video</option>
+				<option value="audio">audio</option>
+				<option value="image">image</option>
+			</select>
 			</span>
-	</form>
+	    </form>
 	
 	<script>
 				function sub()
@@ -102,16 +119,10 @@
          </span>
 		 <div class="options_section_styles"></div>
 		 <br/>
-		 <span id="list2"> 
-			<a id="opt6" class="option_element" href="myfavorites.php" >Favorites</a><br>
-		    <a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
-         </span>
-		 <div class="options_section_styles"></div>
-		 <br/>
 		 <span id="list3" >
+			<a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
 			<a id="opt8" class="option_element" href="friends.php" >Friends</a><br>
-		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>
-		
+		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>		
 		</span>
 		<br/>
 		<div class="options_section_styles"></div>
@@ -123,55 +134,53 @@
 <div style="position:absolute;top:2cm;margin-left:5.3cm;width:60%;float:left;box-sizing:border-box;"> 
 <?php 
 $searchq=$_POST['searchBox'];
+$type=$_POST['search_by_type'];
+$category=$_POST['search_by_category'];
+if($searchq=='')
+	exit("No results found!"); 
 
 $tokenArray=explode(" ",$searchq);
 $q1="SELECT * FROM meta WHERE MediaId IN (";
 $q2="INSERT INTO search VALUES ";
-if(isset($_POST['searchi']))
-{
-$search_criteria=$_POST['searchi'];
-if($search_criteria=="keyword")
-{	
-		for($i=0;$i<count($tokenArray);$i++)
+for($i=0;$i<count($tokenArray);$i++)//generate search query with unions
 		{
-		$q1.="SELECT MediaId FROM keywords WHERE keyword RLIKE '$tokenArray[$i]' OR '$tokenArray[$i]' RLIKE keyword UNION";
-		$q2.= "('".$tokenArray[$i]."'),";
+			$q1.="SELECT MediaId FROM keywords WHERE keyword RLIKE '$tokenArray[$i]' OR '$tokenArray[$i]' RLIKE keyword UNION
+			SELECT MediaId FROM meta WHERE Title RLIKE '$tokenArray[$i]' OR '$tokenArray[$i]' RLIKE Title UNION ";
+			$q2.= "('".$tokenArray[$i]."'),";
 		}
-	$q1=substr($q1,0,-6);
-	$q1.=")";
-	$q2=substr($q2,0,-1);
-}
-else if($search_criteria=="category")
-{
-	for($i=0;$i<count($tokenArray);$i++)
-		{
-		$q1.="SELECT MediaId FROM meta WHERE Category RLIKE '$tokenArray[$i]' OR '$tokenArray[$i]' RLIKE Category UNION ";
-		$q2.= "('".$tokenArray[$i]."'),";
-		}
-}
-else if($search_criteria=="title")
-{
-	for($i=0;$i<count($tokenArray);$i++)
-		{
-		$q1.="SELECT MediaId FROM meta WHERE Title RLIKE '$tokenArray[$i]' OR '$tokenArray[$i]' RLIKE Title UNION ";
-		$q2.= "('".$tokenArray[$i]."'),";
-		}
-	$q1=substr($q1,0,-6);
-	$q1.=")";
-	$q2=substr($q2,0,-1);
-}
-}
-else
-{
-for($i=0;$i<count($tokenArray);$i++)
-{
-$q1.="SELECT MediaId FROM keywords WHERE keyword RLIKE '$tokenArray[$i]' OR '$tokenArray[$i]' RLIKE keyword UNION SELECT MediaId FROM meta WHERE Title RLIKE '$tokenArray[$i]' OR '$tokenArray[$i]' RLIKE Title UNION ";
-$q2.= "('".$tokenArray[$i]."'),";
-}
-$q1=substr($q1,0,-6);
-$q1.=")";
-$q2=substr($q2,0,-1);
-}
+if($category=='Category' && $type=='Type')     //universal search
+    {
+		$q1=substr($q1,0,-7);
+		$q1.= ")";
+		$q2=substr($q2,0,-1);
+	}
+else   //filtered search
+	{
+		if($category=='Category' && $type!='Type')    //search only by type
+		    {
+			    $q1 = substr($q1,0,-7);
+				$q1.=")";
+				$filter = " AND MediaType=".$type;
+				$q1.= $filter;
+				$q2=substr($q2,0,-1);
+			}
+		else if($category!='Category' && $type=='Type')    //search only by category
+		   {
+				$q1 = substr($q1,0,-7);
+				$q1.=")";
+				$filter = " AND Category=".$category;
+				$q1.= $filter;
+				$q2=substr($q2,0,-1);
+			}
+		else
+			{    //search by category and type
+				$q1 = substr($q1,0,-7);
+				$q1.=")";
+				$filter = " AND Category=".$category." AND MediaType=".$type;
+				$q1.= $filter;
+				$q2=substr($q2,0,-1);
+			}
+	}
 
 $result=mysqli_query($con,$q1);
 mysqli_query($con,$q2);
@@ -183,11 +192,9 @@ if(!$result||mysqli_num_rows($result)==0)
 }
 else
 {
-$i=20;
-
 while($row=mysqli_fetch_array($result))
 {
-	$TYPE=substr($row['MediaType'],0,5);
+	$TYPE=$row['MediaType'];
 	if($TYPE=="image")
 	{
 	$url="watch.php?v=".$row['MediaId'];
@@ -207,8 +214,6 @@ while($row=mysqli_fetch_array($result))
 }
 
 }
-
-mysqli_close($con);
  ?>
 
 

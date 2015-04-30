@@ -1,15 +1,20 @@
 <?php
 session_start();
-require '/lib/custom_query.php';
+include '/lib/db_connect.php';
+include '/lib/Playlist.php';
 $u = $_SESSION['uname'];
-$uid = get_uid($u);
+$uid = $_SESSION['uid'];
 $pname = $_POST['plname'];
-$result = get_all_playlists($pname,$uid);
+$playlist=new Playlist;
+$playlist->__set('pname',$pname);
+$playlist->__set('uid',$uid);
+$playlistdao=new PlaylistDAO;
+$result = $playlistdao->get_all_playlists($playlist);
 $row = mysqli_fetch_array($result);
 $pid = $row['PId'];
 if(mysqli_num_rows($result)==0)
 {
-	$result = create_playlist($pname,$uid);
+	$result = $playlistdao->create_playlist($playlist);
 	header("Location:myplaylists.php");
 }
 else

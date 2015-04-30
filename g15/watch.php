@@ -1,11 +1,21 @@
-<?php session_start(); 
-require '/lib/custom_query.php';
-//$con=connect();
-
+<?php
+session_start();
+include '/lib/db_connect.php';
+include '/lib/Media.php';
+include '/lib/User.php';
+include '/lib/Block.php';
+include '/lib/Dandv.php';
+include '/lib/Meta.php';
+include '/lib/Search.php';
+include '/lib/Like.php';
+include '/lib/Playlist.php';
+include '/lib/Plstfiles.php';
+include '/lib/Rating.php';
+include '/lib/Comments.php';
+include '/lib/Subscriptions.php';
 if(isset($_SESSION['uname']))
 	$u = $_SESSION['uname'];
-//else
-	//$u = 'guest';
+
 ?>
 
 <html>
@@ -26,7 +36,8 @@ if(isset($_SESSION['uname']))
       
       var word_array = [
 	  <?php
-	  $most_searched = get_most_searched();
+	  $searchdao=new SearchDAO;
+	  $most_searched = $searchdao->get_most_searched();
 	  $uri="watch.php?v=";
 	  $str='';
 	  while($row = mysqli_fetch_array($most_searched))
@@ -143,6 +154,7 @@ function checkSub()
 }
 
 
+
 function checkLogin()
 {
 
@@ -179,20 +191,17 @@ function checkLogin()
 function start()
 {
 checkLogin();	
-
-checkSub();	
-
-
+checkSub();
 
 	var status=document.getElementById("likeStatus").value;
-	if(status=="ALIKE"){
+	if(status=="like"){
 		document.getElementById("like").disabled=true;
 	document.getElementById("dislike").disabled=false;
 	//document.getElementById("like").style.backgroundColor="#C0C0C0";
 	document.getElementById("like").innerHTML="Liked";
 	document.getElementById("dislike").style.backgroundColor="#bd362f";
 	}
-	else if(status=="ADLIKE")
+	else if(status=="dislike")
 	{
 		document.getElementById("dislike").disabled=true;
 	document.getElementById("like").disabled=false;
@@ -208,11 +217,6 @@ checkSub();
 	
 checkSession(0);
 }
-
-
-
-
-
 
 function AjaxComment()
 {
@@ -322,17 +326,32 @@ function likes(type)
 			<input type="text" class="textBox" name="searchBox" style="width:360px;float:left;" placeholder="search media.." >
 			<a href="#" onclick="sub()" class="text_style1" style="margin-left:-30px;padding-top:0.17cm;float:left;">Go</a>
 			<span style="margin-left:20px;padding-top:0.18cm;position:absolute;">
-			Title <input type="radio" name="searchi" value="title">
-			Keywords <input type="radio" name="searchi" value="keyword">
-			Category <input type="radio" name="searchi" value="category">
+			Filter by:&nbsp;
+			<select name="search_by_category">
+				<option value="Category">Category</option>
+				<option value="Sports">Sports</option>
+				<option value="Music">Music</option>
+				<option value="Kids">Kids</option>
+				<option value="Action">Action</option>
+				<option value="Education">Education</option>
+				<option value="Movies">Movies</option>
+				<option value="Others">Others</option>
+			</select>
+			&nbsp;&nbsp;
+			<select name="search_by_type">
+				<option value="Type">Type</option>
+				<option value="video">video</option>
+				<option value="audio">audio</option>
+				<option value="image">image</option>
+			</select>
 			</span>
+	    </form>
 			<script>
 				function sub()
 				{
 					document.getElementById("search_form").submit();
 				}
 			</script>
-		</form>
 	
 	
 
@@ -362,30 +381,51 @@ function likes(type)
 <?php
 
 $mid = $_GET['v'];
-$result = retrieve_media_by_id($mid);
+$media_obj = new media;
+$media_obj->__set('mediaid', $mid);
+$mediadao = new MediaDAO;
+$result = $mediadao->retrieve_media_by_id($media_obj);
 $row = mysqli_fetch_array($result);
 $url = $row['MediaPath'].$row['MediaName'];
 $upid = $row['UId'];
-$upname = get_uname($upid);
-$usr = retrieve_user($upid);
+$user_obj = new user;
+$user_obj->__set('uid',$upid);
+$userdao_obj= new UserDAO;
+$upname = $userdao_obj->get_uname($user_obj);
+$usr = $userdao_obj->retrieve_user($user_obj);
 $usr_res = mysqli_fetch_array($usr);
-$uid = get_uid($u);
-$block = retrieve_blocked($usr_res['UId'], $uid );
+$uid = $_SESSION['uid'];
+$block_obj = new Block;
+$block_obj->__set('blocker',$usr_res['UId']);
+$block_obj->__set('blocked',$uid);
+$block_dao = new BlockDAO;
+$block = $block_dao->retrieve_blocked($block_obj);
 $blk = mysqli_fetch_array($block);
 $shrwith = $row['ShareWith'];
-if(($shrwith=="Private"&&$row['Uname']!=$u)||$blk['Blocked']== $uid)
+if(($shrwith=="Private"&&$upid!=$uid)||$blk['Blocked']== $uid)
 	header("Location:redirect.php");
-else if($shrwith=="None"&&$row['Uname']!=$u)
+else if($shrwith=="None"&&$upid!=$uid)
 	header("Location:block_redirect.php");
 else
-
-	create_media_view($mid,'view',$uid);
-	//echo "shiva";
-
-$meta = retrieve_meta_by_id($mid);
+{
+	$media_obj=new media;
+	$dandv_obj = new dandv;
+	$dandv_obj->__set('mediaid', $mid);
+	$dandv_obj->__set('type', 'view');
+	$dandv_obj->__set('uid', $uid);
+	$dandv_dao = new DandvDAO;
+	$dandv_dao->create_media_view($dandv_obj);
+}
+$meta_ob = new meta;
+$meta_ob->__set('mediaid', $mid);
+$meta_dao1 = new MetaDAO;
+$meta = $meta_dao1->retrieve_meta_by_id($meta_ob);
 $row3 = mysqli_fetch_array($meta);
 
-$view = get_media_view($mid);
+$dandv_obj2 = new dandv;
+$dandv_obj2->__set('mediaid', $mid);
+$dandv_dao3 = new DandvDAO;
+$view = $dandv_dao->get_media_view($dandv_obj2);
 $view = mysqli_num_rows($view);
 
 ?>
@@ -426,44 +466,54 @@ $view = mysqli_num_rows($view);
 </div>
 
 <input type="hidden" id="likeStatus" value="<?php
-$likes = get_likes($mid,'like');
+$like_obj = new like;
+$like_dao = new LikeDAO;
+$like_obj->__set('mediaid', $mid);
+$like_obj->__set('uid', $uid);
+$like_obj->__set('type', 'like');
+$likes = $like_dao->get_likes($like_obj);
 $num_likes = mysqli_num_rows($likes);
-$dislikes = get_likes($mid,'dislike');
+
+$like_obj->__set('type', 'dislike');
+$dislikes = $like_dao->get_likes($like_obj);
 $num_dislikes = mysqli_num_rows($dislikes);
-$likes_per_usr = get_likes_per_user($mid, $uid);
+
+
+$likes_per_usr = $like_dao->get_likes_per_user($like_obj);
 $res1 = mysqli_fetch_array($likes_per_usr);
-if($res1['UId']==$uid)
-{
-if($res1['Type']=="like")
-		echo "ALIKE";
-else if($res1['Type']=="dislike")
-		echo "ADLIKE";
-}
+if($res1['UId']==$uid)//check if user already liked/disliked
+echo $res1['Type'];
 else echo "none";
 ?>" > 
 
 
 <div style="float:left;border-bottom:1px solid #e5e5e5;">
 <br/>
-<?php
-$res_1 = mysqli_fetch_array($usr);
-$uploader = $res_1['Uname'];
-$uploader_id = $res_1['UId'];
-?>
 <span style="float:left;position:absolute;left:0.2cm;top:13cm;">
-by <a class="text_style1" href="<?php echo "channel.php?uid=".$uploader_id;?>" ><?php echo $uploader;?> </a>
+by <a class="text_style1" href="<?php echo "channel.php?uid=".$upid;?>" ><?php echo $upname;?> </a>
 </span>
 <span style="position:absolute;margin-left:0.6cm;top:12.92cm;float:left;">
 <?php
 if(isset($_SESSION['uname']))
 {
-	$p_uid = get_uid($u);
-	$resply = get_playlist_by_id($p_uid);
+	$playlst_obj = new Playlist;
+	$playlst_obj->__set('uid', $uid);
+	$plst_dao = new PlaylistDAO;
+	$resply = $plst_dao->get_playlist_by_id($playlst_obj);
 	echo "<select name=\"playlist_opt\" id=\"plst\"><option value=\"\"></option>";
 	while($ply = mysqli_fetch_array($resply))
 		{
-			$p=$ply['Pname'];
-			echo "<option value=\"".$p."\">".$p."</option>";
+			$pname = $ply['Pname'];
+			$pid = $ply['PId'];
+			$plstfs_ob = new Plstfiles;
+			$plstfs_ob->__set('pid', $pid);
+			$plstfs_ob->__set('mediaid', $mid);
+			$plstf_dao = new PlstfilesDAO;
+			$result4 = $plstf_dao->get_playlist_files($plstfs_ob);
+			if(mysqli_num_rows($result4)==0)
+				echo "<option value=\"".$pname."\">".$pname."</option>";
+			else
+				echo "<option value=\"".$pname."\" selected>".$pname."</option>";
 		}
 		echo "</select>";
 } 
@@ -479,7 +529,10 @@ if(isset($_SESSION['uname']))
 </div>
 
 <?php
-		$res23 = get_avg_rating($mid);
+		$rating_obj = new rating;
+		$rating_obj->__set('mediaid', $mid);
+		$rate_dao = new RatingDAO;
+		$res23 = $rate_dao->get_avg_rating($rating_obj);
 		$row23=mysqli_fetch_array($res23);
 		$rating=$row23['RTNG'];
 ?>
@@ -511,24 +564,37 @@ if(isset($_SESSION['uname']))
    <input type="hidden" value="<?php echo $mid;?>" id="mid">
    <input type="hidden" value="<?php echo $u;?>" id="uname">
    
-  
+     
  <div id="comment_section"> <p class="text_style1">Comments</p></div>
    
  <?php
-$res = get_comments($mid);
+ $comment_obj = new Comment;
+ $comment_obj->__set('mediaid', $mid);
+ $cmnt_dao = new CommentsDAO;
+ $res = $cmnt_dao->get_comments($comment_obj);
+ $commenter_id = $row['UId'];
+ $cmntr_obj = new user;
+ $cmntr_obj->__set('uid', $commenter_id);
+ $cmntr_dao = new UserDAO;
+ $cmntr_name = $cmntr_dao->get_uname($cmntr_obj);
 while($row = mysqli_fetch_array($res))
 {
-echo "<div id=\"comment_section\"><b>".get_uname($row['UId']).":</b><br/>".nl2br($row['comment'])."</div>";
+echo "<div id=\"comment_section\"><b>".$cmntr_name.":</b><br/>".nl2br($row['comment'])."</div>";
 }
 ?>
     
-<input type="hidden" id="STATUSSUB" value="<?php if($u=="guest")	echo "guest"; else{
-if($u==$uploader)
+<input type="hidden" id="STATUSSUB" value="<?php if($u=="guest") echo "guest";
+ else{
+if($u==$upname)
 	echo "own";
 else{
-$rese=get_subscriptions($uid, $uploader_id);
+	$sub = new Subscriptions;
+	$sub->__set('subscriber', $uid);
+	$sub->__set('subscribedto', $upid);
+	$sub_dao = new SubscriptionsDAO;
+	$rese = $sub_dao->get_subscriptions($sub);
 $e=mysqli_fetch_array($rese);
-if($e['Subscriber']==get_uid($u))
+if($e['Subscriber']==$uid)//if I already subscribed to the uploader
 	echo "tru";
 else	
 	echo "unsubscribed";

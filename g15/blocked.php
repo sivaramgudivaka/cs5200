@@ -1,14 +1,17 @@
 <!DOCTYPE>
 
 <?php
-session_start(); 
-require '/lib/custom_query.php';
+session_start();
+include 'lib/db_connect.php';
+require '/lib/User.php';
 if(!isset($_SESSION['uname']))
 	header("Location:signin.php");
-$u=$_SESSION['uname'];
-$uid=get_uid($u);
-$result=retrieve_user($uid);
-$row=mysqli_fetch_array($result);
+$u = $_SESSION['uname'];
+$uid = $_SESSION['uid'];
+$user_obj= new user;
+$user_obj->__set('uname',$u);
+$user_obj->__set('uid',$uid);
+$userdao_obj= new UserDAO;
 ?>
 
 <html>
@@ -48,11 +51,26 @@ function submitForm()
 			<input type="text" class="textBox" name="searchBox" style="width:360px;float:left;" placeholder="search media.." >
 			<a href="#" onclick="sub()" class="text_style1" style="margin-left:-30px;padding-top:0.17cm;float:left;">Go</a>
 			<span style="margin-left:20px;padding-top:0.18cm;position:absolute;">
-			Title <input type="radio" name="searchi" value="title">
-			Keywords <input type="radio" name="searchi" value="keyword">
-			Category <input type="radio" name="searchi" value="category">
+			Filter by:&nbsp;
+			<select name="search_by_category">
+				<option value="Category">Category</option>
+				<option value="Sports">Sports</option>
+				<option value="Music">Music</option>
+				<option value="Kids">Kids</option>
+				<option value="Action">Action</option>
+				<option value="Education">Education</option>
+				<option value="Movies">Movies</option>
+				<option value="Others">Others</option>
+			</select>
+			&nbsp;&nbsp;
+			<select name="search_by_type">
+				<option value="Type">Type</option>
+				<option value="video">video</option>
+				<option value="audio">audio</option>
+				<option value="image">image</option>
+			</select>
 			</span>
-	</form>
+	    </form>
 	
 	<script>
 				function sub()
@@ -100,16 +118,10 @@ function submitForm()
          </span>
 		 <div class="options_section_styles"></div>
 		 <br/>
-		 <span id="list2"> 
-			<a id="opt6" class="option_element" href="myfavorites.php" >Favorites</a><br>
-		    <a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
-         </span>
-		 <div class="options_section_styles"></div>
-		 <br/>
 		 <span id="list3" >
+			<a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
 			<a id="opt8" class="option_element" href="friends.php" >Friends</a><br>
-		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>
-		
+		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>		
 		</span>
 		<br/>
 		<div class="options_section_styles"></div>
@@ -132,28 +144,30 @@ function submitForm()
 		</tr>
 	
 		<?php
-		$res=retrieve_blocked_user($uid);
+
+		$res = $userdao_obj->retrieve_blocked_user($user_obj);
 		while($row=mysqli_fetch_array($res))
 		{
 		$snd=$row['Blocked'];
-		
-		echo "<tr class=\"display_style\"><td>".$snd."</a></td></tr>";
+		$user_obj= new user;
+		$user_obj->__set('uid',$snd);
+		$userdao_obj= new UserDAO;
+		$snd_name = $userdao_obj->get_uname($user_obj);
+		echo "<tr><td><a href=\"block.php?u=".$snd."\" class=\"auth_opt\">".$snd_name."</a></td></tr>";
 		}
 		?>
 		
 		<tr><td>select from the below list to block users</td></tr>
 		<?php
-		$res=get_blocked_users($u);
+		$user_obj->__set('uid',$uid);
+		$res=$userdao_obj->get_blocked_users($user_obj);
 		$num=mysqli_num_rows($res);
 		while($row=mysqli_fetch_array($res))
 		{
-		$snd=$row['UId'];
-		if($snd==$uid)
-			continue;
-		else{
-			$snd1 = get_uname($snd);
-			echo "<tr><td><a href=\"block.php?u=".$snd1."\" class=\"auth_opt\">".$snd1."</a></td></tr>";
-		}
+		$snd = $row['UId'];
+		$user_obj->__set('uid', $snd);
+		$snd1 = $userdao_obj->get_uname($user_obj);
+			echo "<tr><td><a href=\"block.php?u=".$snd."\" class=\"auth_opt\">".$snd1."</a></td></tr>";
 		}
 		?>
 	

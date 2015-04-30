@@ -1,13 +1,22 @@
 <!DOCTYPE>
 
 <?php
-session_start(); 
-require '/lib/custom_query.php';
+session_start();
+ include 'lib/db_connect.php';
+include '/lib/User.php';
+include '/lib/Friendreq.php';
 if(!isset($_SESSION['uname']))
 	header("Location:signin.php");
 $u=$_SESSION['uname'];
-$uid = get_uid($u);
-$result=retrieve_user($uid);
+$user_obj= new user;
+$userdao_obj= new UserDAO;
+$friendreq_obj= new Friendreq;
+$friendreqdao_obj= new FriendreqDAO;
+
+$user_obj->__set('uname',$u);
+$uid= $userdao_obj->get_uid($user_obj);
+$user_obj->__set('uid',$uid);
+$result = $userdao_obj->retrieve_user($user_obj);
 $row=mysqli_fetch_array($result);
 ?>
 
@@ -48,11 +57,26 @@ function submitForm()
 			<input type="text" class="textBox" name="searchBox" style="width:360px;float:left;" placeholder="search media.." >
 			<a href="#" onclick="sub()" class="text_style1" style="margin-left:-30px;padding-top:0.17cm;float:left;">Go</a>
 			<span style="margin-left:20px;padding-top:0.18cm;position:absolute;">
-			Title <input type="radio" name="searchi" value="title">
-			Keywords <input type="radio" name="searchi" value="keyword">
-			Category <input type="radio" name="searchi" value="category">
+			Filter by:&nbsp;
+			<select name="search_by_category">
+				<option value="Category">Category</option>
+				<option value="Sports">Sports</option>
+				<option value="Music">Music</option>
+				<option value="Kids">Kids</option>
+				<option value="Action">Action</option>
+				<option value="Education">Education</option>
+				<option value="Movies">Movies</option>
+				<option value="Others">Others</option>
+			</select>
+			&nbsp;&nbsp;
+			<select name="search_by_type">
+				<option value="Type">Type</option>
+				<option value="video">video</option>
+				<option value="audio">audio</option>
+				<option value="image">image</option>
+			</select>
 			</span>
-	</form>
+	    </form>
 	
 	<script>
 				function sub()
@@ -100,16 +124,10 @@ function submitForm()
          </span>
 		 <div class="options_section_styles"></div>
 		 <br/>
-		 <span id="list2"> 
-			<a id="opt6" class="option_element" href="myfavorites.php" >Favorites</a><br>
-		    <a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
-         </span>
-		 <div class="options_section_styles"></div>
-		 <br/>
 		 <span id="list3" >
+			<a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
 			<a id="opt8" class="option_element" href="friends.php" >Friends</a><br>
-		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>
-		
+		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>		
 		</span>
 		<br/>
 		<div class="options_section_styles"></div>
@@ -119,16 +137,22 @@ function submitForm()
   
 <div style="position:absolute;top:11%;left:6cm;">
   <table align="center" cellpadding="6" cellspacing="8" border="0">
-  <tr class="display_style"><td>Send a friend request.<a href="createfrndreq.php">Click here.</a></td><tr>
+  <tr class="display_style"><td>Send a friend request.</td><td><a href="createfrndreq.php" class="auth_opt">Click here.</a></td><tr>
+  <td><h3>New Friend Requests:</h3></td>
   <?php
-		$res=pending_reqs($uid)
+		$friendreq_obj->__set('uid',$uid);
+		$res = $friendreqdao_obj->pending_reqs($friendreq_obj);
 		$num=mysqli_num_rows($res);
 		while($row=mysqli_fetch_array($res))
 		{
-		$snd=$row['friend'];
-		echo "<tr class=\"display_style\"><td>Friend Request from ".$snd."</td>";
-		echo "<td><a href=\"friendreq.php?f=".$snd."&a=y\" class=\"auth_opt\">Accept</a></td>";
-		echo "<td><a href=\"friendreq.php?f=".$snd."&a=n\" class=\"auth_opt\">Reject</a></td></tr>";
+		$snd=$row['UId'];
+		$snd_usr_ob = new user;
+		$snd_usr_ob->__set('uid', $snd);
+		$snd_dao = new UserDAO;
+		$snd_name =$snd_dao->get_uname($snd_usr_ob);
+		echo "<tr class=\"display_style\"><td>Friend Request from ".$snd_name."</td>";
+		echo "<td><a href=\"friendreq.php?from=".$snd."&a=accepted\" class=\"auth_opt\">Accept</a></td>";
+		echo "<td><a href=\"friendreq.php?from=".$snd."&a=rejected\" class=\"auth_opt\">Reject</a></td></tr>";
 		}
 		?>
 	
@@ -137,19 +161,29 @@ function submitForm()
 		<td><h3>Friends List:</h3></td>
 		</tr>
 		<?php
-		$res=get_friends($uid);
+		$res=$friendreqdao_obj->get_my_friends($friendreq_obj);
 		$num=mysqli_num_rows($res);
-		if($num)
+		while($row=mysqli_fetch_array($res))
 			{
-				while($row=mysqli_fetch_array($res))
-					{
-						$snd=$row['friend'];
-						if($snd==$u)
-							continue;
-						$uid=$row['friend'];
-						echo "<tr class=\"display_style\"><td><a href=\"channel.php?uid=".$uid."\">".$snd."</a></td></tr>";
-					}
-		}
+				$snd=$row['friend'];
+				$snd_usr_ob = new user;
+				$snd_usr_ob->__set('uid', $snd);
+				$snd_dao = new UserDAO;
+				$snd_name =$snd_dao->get_uname($snd_usr_ob);
+				echo "<tr class=\"display_style\"><td><a href=\"channel.php?uid=".$snd."\" class=\"auth_opt\">".$snd_name."</a></td></tr>";
+			}
+			
+		$res=$friendreqdao_obj->get_their_friends($friendreq_obj);
+		while($row=mysqli_fetch_array($res))
+			{
+				$snd=$row['UId'];
+				$snd_usr_ob = new user;
+				$snd_usr_ob->__set('uid', $snd);
+				$snd_dao = new UserDAO;
+				$snd_name =$snd_dao->get_uname($snd_usr_ob);
+				echo "<tr class=\"display_style\"><td><a href=\"channel.php?uid=".$snd."\" class=\"auth_opt\">".$snd_name."</a></td></tr>";
+			}
+
 		?>
 	 </table>
 </div>

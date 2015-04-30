@@ -1,5 +1,6 @@
-<?php session_start(); 
-require '/lib/custom_query.php';
+<?php
+ session_start();
+include 'lib/db_connect.php';
 if(!isset($_SESSION['uname']))
 	header("Location:signin.php");
 
@@ -36,11 +37,26 @@ $(".upload").click(function(){
 			<input type="text" class="textBox" name="searchBox" style="width:360px;float:left;" placeholder="search media.." >
 			<a href="#" onclick="sub()" class="text_style1" style="margin-left:-30px;padding-top:0.17cm;float:left;">Go</a>
 			<span style="margin-left:20px;padding-top:0.18cm;position:absolute;">
-			Title <input type="radio" name="searchi" value="title">
-			Keywords <input type="radio" name="searchi" value="keyword">
-			Category <input type="radio" name="searchi" value="category">
+			Filter by:&nbsp;
+			<select name="search_by_category">
+				<option value="Category">Category</option>
+				<option value="Sports">Sports</option>
+				<option value="Music">Music</option>
+				<option value="Kids">Kids</option>
+				<option value="Action">Action</option>
+				<option value="Education">Education</option>
+				<option value="Movies">Movies</option>
+				<option value="Others">Others</option>
+			</select>
+			&nbsp;&nbsp;
+			<select name="search_by_type">
+				<option value="Type">Type</option>
+				<option value="video">video</option>
+				<option value="audio">audio</option>
+				<option value="image">image</option>
+			</select>
 			</span>
-	</form>
+	    </form>
 	
 	<script>
 				function sub()
@@ -88,16 +104,10 @@ $(".upload").click(function(){
          </span>
 		 <div class="options_section_styles"></div>
 		 <br/>
-		 <span id="list2"> 
-			<a id="opt6" class="option_element" href="myfavorites.php" >Favorites</a><br>
-		    <a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
-         </span>
-		 <div class="options_section_styles"></div>
-		 <br/>
 		 <span id="list3" >
+			<a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
 			<a id="opt8" class="option_element" href="friends.php" >Friends</a><br>
-		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>
-		
+		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>		
 		</span>
 		<br/>
 		<div class="options_section_styles"></div>
@@ -109,7 +119,7 @@ $(".upload").click(function(){
 <div style="position:absolute;top:10%;left:25%;">
   <table align="center" cellpadding="6" cellspacing="8" border="0">
 	<form method="post" action="media_upload_process.php" enctype="multipart/form-data" >
-	<tr><td><input type="hidden" name="MAX_FILE_SIZE" value="104857600" ></td></tr>
+	<tr><td><input type="hidden" name="MAX_FILE_SIZE" value="838860800" ></td></tr>
 		<tr>
 		<td>Select media to upload: <label style="color:#3498db"><strong> (Limit: 100MB per File)</strong></label></td>
 		
@@ -155,7 +165,8 @@ $(".upload").click(function(){
 				<option value=""></option>
 				<option value="Public">Public</option>
 				<option value="Private">Private</option>
-				<option value="No one">No one</option></td>
+				<option value="No one">None</option></td>
+				</select>
 		</tr>
 		<tr>
 		<td>Keywords:</td><td>  <input type="text" name="keywords" class="textBox" placeholder="separate by commas." required></td>

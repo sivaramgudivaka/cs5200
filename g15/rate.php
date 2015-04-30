@@ -1,17 +1,23 @@
 <?php
 session_start();
-require '/lib/custom_query.php';
-$u=$_SESSION['uname'];
-$uid = get_uid($u);
+include '/lib/db_connect.php';
+include '/lib/Rating.php';
+$u = $_SESSION['uname'];
+$uid = $_SESSION['uid'];
 $r = $_GET['r'];
 $m = $_GET['m'];
-$q1 = get_rating_by_user($uid, $m);
+$rating_obj=new rating;
+$rating_obj->__set('uid',$uid);
+$rating_obj->__set('mediaid',$m);
+$rating_obj->__set('rating',$r);
+$ratingdao_obj=new RatingDAO;
+$q1 = $ratingdao_obj->get_rating_by_user($rating_obj);
 $res1 = mysqli_fetch_array($q1);
 if($res1['UId']==$uid && $res1['MediaId']==$m)
-	update_rating($r, $uid, $m);
+	$ratingdao_obj->update_rating($rating_obj);
 else
-	rate_media($uid, $m, $r);
-		$res=get_avg_rating($m);
+	$ratingdao_obj->rate_media($rating_obj);
+		$res=$ratingdao_obj->get_avg_rating($rating_obj);
 		$row=mysqli_fetch_array($res);
 		echo $row['RTNG'];
 

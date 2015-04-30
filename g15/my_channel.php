@@ -1,6 +1,8 @@
 <?php 
-session_start(); 
-require '/lib/custom_query.php';
+session_start();
+include 'lib/db_connect.php';
+include '/lib/Media.php';
+include '/lib/CustomDAO.php';
 ?>
 
 <html>
@@ -22,11 +24,26 @@ require '/lib/custom_query.php';
 			<input type="text" class="textBox" name="searchBox" style="width:360px;float:left;" placeholder="search media.." >
 			<a href="#" onclick="sub()" class="text_style1" style="margin-left:-30px;padding-top:0.17cm;float:left;">Go</a>
 			<span style="margin-left:20px;padding-top:0.18cm;position:absolute;">
-			Title <input type="radio" name="searchi" value="title">
-			Keywords <input type="radio" name="searchi" value="keyword">
-			Category <input type="radio" name="searchi" value="category">
+			Filter by:&nbsp;
+			<select name="search_by_category">
+				<option value="Category">Category</option>
+				<option value="Sports">Sports</option>
+				<option value="Music">Music</option>
+				<option value="Kids">Kids</option>
+				<option value="Action">Action</option>
+				<option value="Education">Education</option>
+				<option value="Movies">Movies</option>
+				<option value="Others">Others</option>
+			</select>
+			&nbsp;&nbsp;
+			<select name="search_by_type">
+				<option value="Type">Type</option>
+				<option value="video">video</option>
+				<option value="audio">audio</option>
+				<option value="image">image</option>
+			</select>
 			</span>
-	</form>
+	    </form>
 	
 	<script>
 				function sub()
@@ -74,16 +91,10 @@ require '/lib/custom_query.php';
          </span>
 		 <div class="options_section_styles"></div>
 		 <br/>
-		 <span id="list2"> 
-			<a id="opt6" class="option_element" href="myfavorites.php" >Favorites</a><br>
-		    <a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
-         </span>
-		 <div class="options_section_styles"></div>
-		 <br/>
 		 <span id="list3" >
+			<a id="opt7" class="option_element" href="myplaylists.php" >Playlists</a><br/>
 			<a id="opt8" class="option_element" href="friends.php" >Friends</a><br>
-		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>
-		
+		 	<a id="opt9" class="option_element" href="blocked.php" >Blocked Users</a><br><br><br><br><br>		
 		</span>
 		<br/>
 		<div class="options_section_styles"></div>
@@ -94,8 +105,11 @@ require '/lib/custom_query.php';
 <div style="position:absolute;top:3cm;margin-left:5.3cm;width:70%;height:auto;float:left;box-sizing:border-box;"> 
 <?php
 $u = $_SESSION['uname'];
-$uid = get_uid($u);
-$result = get_uploaded_media($uid);
+$uid = $_SESSION['uid'];
+$media_obj = new media;
+$media_obj->__set('uid', $uid);
+$custom_dao = new CustomDAO;
+$result = $custom_dao->get_uploaded_media($media_obj);
 
 while($row=mysqli_fetch_array($result))
 {
