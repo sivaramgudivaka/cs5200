@@ -45,15 +45,15 @@ function start()
 <div id="top_bar">
 	<div id="container-topbar">
 		
-			<a href="index.php" class="text_style1" style="padding-top:14px;float:left;">YouTube+</a>
+			<a href="index.php" class="text_style1" style="padding-top:14px;float:left;font-size:18px;">YouTube+</a>
 	
 	<div id="searchbar" class="searchbar" >
 		<form name="search_form" id="search_form" action="browse.php" method="post">
 			<input type="text" class="textBox" name="searchBox" style="width:360px;float:left;" placeholder="search media.." >
 			<a href="#" onclick="sub()" class="text_style1" style="margin-left:-30px;padding-top:0.17cm;float:left;">Go</a>
-			<span style="margin-left:20px;padding-top:0.18cm;position:absolute;">
+			<span style="margin-left:20px;padding-top:0.02cm;position:absolute;">
 			Filter by:&nbsp;
-			<select name="search_by_category">
+			<select name="search_by_category" class="filter">
 				<option value="Category">Category</option>
 				<option value="Sports">Sports</option>
 				<option value="Music">Music</option>
@@ -64,7 +64,7 @@ function start()
 				<option value="Others">Others</option>
 			</select>
 			&nbsp;&nbsp;
-			<select name="search_by_type">
+			<select name="search_by_type" class="filter">
 				<option value="Type">Type</option>
 				<option value="video">video</option>
 				<option value="audio">audio</option>
