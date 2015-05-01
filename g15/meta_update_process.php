@@ -11,6 +11,7 @@ $category=$_POST['category_list'];
 $desc=$_POST['description'];
 $mid=$_POST['mid'];
 $share=$_POST['sharewith_list'];
+$mediatype = $_POST['type_list'];
 
 //meta object
 $meta_obj = new meta;
@@ -27,7 +28,7 @@ $custom_dao->update_meta($meta_obj, $media_obj);
 $string=$_POST['keywords'];
 $keywords_obj = new keywords;
 $keywords_obj->__set('mediaid', $mid);
-$keywords_dao = new Keywords_DAO;
+$keywords_dao = new KeywordsDAO;
 $keywords_dao->delete_keywords($keywords_obj);
 $tok = strtok($string, ",");
 $keys = '';
@@ -38,7 +39,7 @@ while ($tok != false)
 		$tok=strtok(",");
 	}
 	$keys= substr($insertKeyword, 0, -2);
-	$keywords_dao = new Keywords_DAO;
+	$keywords_dao = new KeywordsDAO;
 	$keywords_dao->create_keywords($mid, $keys);
 	header("Location:uploads.php");	
 ?>

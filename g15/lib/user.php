@@ -143,5 +143,21 @@ function get_blocked_users($usr)
 	return $q1;
 }
 
+public function delete_user($user)
+{		
+    $uid=$user->__get('uid');
+	$con = connect();
+	$q1 = mysqli_query($con, "DELETE FROM user WHERE UId = '$uid'");
+	return $q1;
+}
+
+public function update_role($user)
+{
+	$uid=$user->__get('uid');
+	$role=$user->__get('role');
+	$con = connect();
+	mysqli_query($con, "UPDATE user SET Role='$role' WHERE UId = '$uid'");
+}
+
 }
 ?>
